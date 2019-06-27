@@ -1,0 +1,19 @@
+{
+
+    "name": "cn.capstones.dprefab",
+
+    "displayName": "Capstone Dynamic Prefab",
+
+    "version": "0.0.1",
+
+    "unity": "2018.3",
+
+    "description": "Capstone Dynamic Prefab",
+
+    "keywords": [
+        "unity"
+    ],
+
+    "category": "Unity"
+
+}
