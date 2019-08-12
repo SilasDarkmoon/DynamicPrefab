@@ -174,6 +174,10 @@ namespace Capstones.UnityEditorEx
                                 prefabColor = Color.red;
                             }
                             fontColor = (fontColor + prefabColor);// / 2;
+                            fontColor.r = Mathf.Clamp01(fontColor.r);
+                            fontColor.g = Mathf.Clamp01(fontColor.g);
+                            fontColor.b = Mathf.Clamp01(fontColor.b);
+                            fontColor.a = Mathf.Clamp01(fontColor.a);
                         }
                         else
                         {
@@ -196,6 +200,10 @@ namespace Capstones.UnityEditorEx
                                     //}
                                 }
                             }
+                        }
+                        if (!go.activeInHierarchy)
+                        {
+                            fontColor = (fontColor + Color.black) / 2;
                         }
                         if (shouldredraw)
                         { 
