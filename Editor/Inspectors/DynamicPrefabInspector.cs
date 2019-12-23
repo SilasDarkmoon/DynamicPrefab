@@ -201,9 +201,20 @@ namespace Capstones.UnityEditorEx
                                 }
                             }
                         }
-                        if (!go.activeInHierarchy)
+                        if (!EditorGUIUtility.isProSkin)
                         {
                             fontColor = (fontColor + Color.black) / 2;
+                            if (go.activeInHierarchy)
+                            {
+                                fontColor = (fontColor + Color.black) / 2;
+                            }
+                        }
+                        else
+                        {
+                            if (!go.activeInHierarchy)
+                            {
+                                fontColor = (fontColor + Color.black) / 2;
+                            }
                         }
                         if (shouldredraw)
                         { 
