@@ -53,7 +53,7 @@ namespace Capstones.UnityEngineEx
                 DestroyDynamicChild();
                 OldSource = Source;
             }
-            if (ForbidLoadDynamicChild)
+            if (UnityEditor.BuildPipeline.isBuildingPlayer || ForbidLoadDynamicChild)
             {
                 return;
             }

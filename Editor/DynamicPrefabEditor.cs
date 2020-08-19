@@ -76,7 +76,7 @@ namespace Capstones.UnityEditorEx
                 {
                     SyncSceneObjsAccordingToLastModified();
                 }
-                else
+                //else // We should always restore DynamicPrefab.ForbidLoadDynamicChild?
                 {
                     DynamicPrefab.ForbidLoadDynamicChild = false;
                 }
