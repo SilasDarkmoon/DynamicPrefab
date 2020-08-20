@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using Capstones.UnityEngineEx;
 
 using Object = UnityEngine.Object;
@@ -135,19 +137,348 @@ namespace Capstones.UnityEditorEx
             //pos.x = Screen.height - pos.x;
             return GetColorAtScreenPos(pos);
         }
+        //private static Color GetDefaultBackgroundColor()
+        //{
+        //    float kViewBackgroundIntensity = EditorGUIUtility.isProSkin ? 0.22f : 0.76f;
+        //    return new Color(kViewBackgroundIntensity, kViewBackgroundIntensity, kViewBackgroundIntensity, 1f);
+        //}
+        private static Func<Color> _GetDefaultBackgroundColorFunc;
         private static Color GetDefaultBackgroundColor()
         {
-            float kViewBackgroundIntensity = EditorGUIUtility.isProSkin ? 0.22f : 0.76f;
-            return new Color(kViewBackgroundIntensity, kViewBackgroundIntensity, kViewBackgroundIntensity, 1f);
+            if (_GetDefaultBackgroundColorFunc == null)
+            {
+                _GetDefaultBackgroundColorFunc = (Func<Color>)Delegate.CreateDelegate(typeof(Func<Color>), typeof(EditorGUIUtility).GetMethod("GetDefaultBackgroundColor", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic));
+            }
+            return _GetDefaultBackgroundColorFunc();
+        }
+        private static Type _Type_HierarchyStyles;
+        private static Type GetHierarchyStyles()
+        {
+            if (_Type_HierarchyStyles == null)
+            {
+                Type tTreeViewGUI = typeof(EditorGUI).Assembly.GetType("UnityEditor.IMGUI.Controls.TreeViewGUI");
+                _Type_HierarchyStyles = tTreeViewGUI.GetNestedType("Styles", System.Reflection.BindingFlags.NonPublic);
+            }
+            return _Type_HierarchyStyles;
+        }
+        private static Func<GUIStyle> _GetHierarchyStyle_Selection_Func;
+        private static GUIStyle GetHierarchyStyle_Selection()
+        {
+            if (_GetHierarchyStyle_Selection_Func == null)
+            {
+                var fi = GetHierarchyStyles().GetField("selectionStyle", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                _GetHierarchyStyle_Selection_Func = Expression.Lambda<Func<GUIStyle>>(Expression.Field(null, fi)).Compile();
+            }
+            return _GetHierarchyStyle_Selection_Func();
+        }
+        private static Type _Type_GameObjectStyles;
+        private static Type GetGameObjectStyles()
+        {
+            if (_Type_GameObjectStyles == null)
+            {
+                Type tGameObjectTreeViewGUI = typeof(EditorGUI).Assembly.GetType("UnityEditor.GameObjectTreeViewGUI");
+                _Type_GameObjectStyles = tGameObjectTreeViewGUI.GetNestedType("GameObjectStyles", System.Reflection.BindingFlags.NonPublic);
+            }
+            return _Type_GameObjectStyles;
+        }
+        private static Func<Color> _GetGameObjectStyle_HoveredBackgroundColor_Func;
+        private static Color GetGameObjectStyle_HoveredBackgroundColor()
+        {
+            if (_GetGameObjectStyle_HoveredBackgroundColor_Func == null)
+            {
+                var fi = GetGameObjectStyles().GetField("hoveredBackgroundColor", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                _GetGameObjectStyle_HoveredBackgroundColor_Func = Expression.Lambda<Func<Color>>(Expression.Field(null, fi)).Compile();
+            }
+            return _GetGameObjectStyle_HoveredBackgroundColor_Func();
+        }
+        private static Func<GUIStyle> _GetGameObjectStyle_DisabledLabel_Func;
+        private static GUIStyle GetGameObjectStyle_DisabledLabel()
+        {
+            if (_GetGameObjectStyle_DisabledLabel_Func == null)
+            {
+                var fi = GetGameObjectStyles().GetField("disabledLabel", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                _GetGameObjectStyle_DisabledLabel_Func = Expression.Lambda<Func<GUIStyle>>(Expression.Field(null, fi)).Compile();
+            }
+            return _GetGameObjectStyle_DisabledLabel_Func();
+        }
+        private static Type _Type_TreeViewStyles;
+        private static Type GetTreeViewStyles()
+        {
+            if (_Type_TreeViewStyles == null)
+            {
+                Type tTreeViewGUI = typeof(EditorGUI).Assembly.GetType("UnityEditor.IMGUI.Controls.TreeViewGUI");
+                _Type_TreeViewStyles = tTreeViewGUI.GetNestedType("Styles", System.Reflection.BindingFlags.NonPublic);
+            }
+            return _Type_TreeViewStyles;
+        }
+        private static Func<GUIStyle> _GetTreeViewStyle_LineStyle_Func;
+        private static GUIStyle GetTreeViewStyle_LineStyle()
+        {
+            if (_GetTreeViewStyle_LineStyle_Func == null)
+            {
+                var fi = GetTreeViewStyles().GetField("lineStyle", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                _GetTreeViewStyle_LineStyle_Func = Expression.Lambda<Func<GUIStyle>>(Expression.Field(null, fi)).Compile();
+            }
+            return _GetTreeViewStyle_LineStyle_Func();
+        }
+
+        public abstract class NonPublicTypeWrapper<TRaw>
+        {
+            protected TRaw _Raw;
+            public TRaw Raw { get { return _Raw; } }
+        }
+        public class SceneHierarchyWindowWrapper : NonPublicTypeWrapper<EditorWindow>
+        {
+            private SceneHierarchyWindowWrapper(EditorWindow win)
+            {
+                _Raw = win;
+            }
+
+            private static Type _Type_SceneHierarchyWindow;
+            public static Type Type_SceneHierarchyWindow
+            {
+                get
+                {
+                    if (_Type_SceneHierarchyWindow == null)
+                    {
+                        _Type_SceneHierarchyWindow = typeof(EditorGUI).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+                    }
+                    return _Type_SceneHierarchyWindow;
+                }
+            }
+
+            public static SceneHierarchyWindowWrapper[] GetAllSceneHierarchyWindows()
+            {
+                var wins = Resources.FindObjectsOfTypeAll(Type_SceneHierarchyWindow);
+                SceneHierarchyWindowWrapper[] results = new SceneHierarchyWindowWrapper[wins.Length];
+                for (int i = 0; i < wins.Length; ++i)
+                {
+                    results[i] = new SceneHierarchyWindowWrapper(wins[i] as EditorWindow);
+                }
+                return results;
+            }
+            public static SceneHierarchyWindowWrapper GetSceneHierarchyWindowAt(Rect rect)
+            {
+                var all = GetAllSceneHierarchyWindows();
+                for (int i = 0; i < all.Length; ++i)
+                {
+                    var win = all[i];
+                    if (win._Raw.position.Overlaps(rect))
+                    {
+                        return win;
+                    }
+                }
+                return null;
+            }
+
+            private static Func<EditorWindow, object> _Getter_SceneHierarchy;
+            public SceneHierarchyWrapper SceneHierarchy
+            {
+                get
+                {
+                    if (_Getter_SceneHierarchy == null)
+                    {
+                        var pi = Type_SceneHierarchyWindow.GetProperty("sceneHierarchy", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                        var par = Expression.Parameter(typeof(EditorWindow));
+                        _Getter_SceneHierarchy =
+                            Expression.Lambda<Func<EditorWindow, object>>(
+                                Expression.Property(
+                                    Expression.Convert(par, Type_SceneHierarchyWindow)
+                                    , pi
+                                    )
+                                , par
+                                ).Compile();
+                    }
+                    return new SceneHierarchyWrapper(_Getter_SceneHierarchy(_Raw));
+                }
+            }
+        }
+        public class SceneHierarchyWrapper : NonPublicTypeWrapper<object>
+        {
+            private static Type _Type_SceneHierarchy;
+            public static Type Type_SceneHierarchy { get { return _Type_SceneHierarchy; } }
+
+            internal SceneHierarchyWrapper(object raw)
+            {
+                _Raw = raw;
+                if (_Type_SceneHierarchy == null)
+                {
+                    _Type_SceneHierarchy = raw.GetType();
+                }
+            }
+
+            private static Func<object, object> _Getter_TreeView;
+            public TreeViewControllerWrapper TreeView
+            {
+                get
+                {
+                    if (_Getter_TreeView == null)
+                    {
+                        var pi = Type_SceneHierarchy.GetProperty("treeView", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                        var par = Expression.Parameter(typeof(object));
+                        _Getter_TreeView = Expression.Lambda<Func<object, object>>(
+                            Expression.Property(
+                                Expression.Convert(par, Type_SceneHierarchy)
+                                , pi
+                                )
+                            , par
+                            ).Compile();
+                    }
+                    return new TreeViewControllerWrapper(_Getter_TreeView(_Raw));
+                }
+            }
+        }
+        public class TreeViewControllerWrapper : NonPublicTypeWrapper<object>
+        {
+            private static Type _Type_TreeViewController;
+            public static Type Type_TreeViewController { get { return _Type_TreeViewController; } }
+
+            internal TreeViewControllerWrapper(object raw)
+            {
+                _Raw = raw;
+                if (_Type_TreeViewController == null)
+                {
+                    _Type_TreeViewController = raw.GetType();
+                }
+            }
+
+            private static Func<object, object> _Getter_Data;
+            public ITreeViewDataSourceWrapper Data
+            {
+                get
+                {
+                    if (_Getter_Data == null)
+                    {
+                        var pi = Type_TreeViewController.GetProperty("data", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                        var par = Expression.Parameter(typeof(object));
+                        _Getter_Data = Expression.Lambda<Func<object, object>>(
+                            Expression.Property(
+                                Expression.Convert(par, Type_TreeViewController)
+                                , pi
+                                )
+                            , par
+                            ).Compile();
+                    }
+                    return new ITreeViewDataSourceWrapper(_Getter_Data(_Raw));
+                }
+            }
+
+            private static Func<object, TreeViewItem, bool> _Func_IsItemDragSelectedOrSelected;
+            public bool IsItemDragSelectedOrSelected(TreeViewItem item)
+            {
+                if (_Func_IsItemDragSelectedOrSelected == null)
+                {
+                    var mi = Type_TreeViewController.GetMethod("IsItemDragSelectedOrSelected", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                    var tar = Expression.Parameter(typeof(object));
+                    var par = Expression.Parameter(typeof(TreeViewItem));
+                    _Func_IsItemDragSelectedOrSelected = Expression.Lambda<Func<object, TreeViewItem, bool>>(
+                        Expression.Call(
+                            Expression.Convert(tar, Type_TreeViewController)
+                            , mi, par
+                            )
+                        , tar, par
+                        ).Compile();
+                }
+                return _Func_IsItemDragSelectedOrSelected(_Raw, item);
+            }
+
+            private static Func<object, TreeViewItem> _Getter_HoveredItem;
+            public TreeViewItem HoveredItem
+            {
+                get
+                {
+                    if (_Getter_HoveredItem == null)
+                    {
+                        var pi = Type_TreeViewController.GetProperty("hoveredItem", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                        var par = Expression.Parameter(typeof(object));
+                        _Getter_HoveredItem = Expression.Lambda<Func<object, TreeViewItem>>(
+                            Expression.Property(
+                                Expression.Convert(par, Type_TreeViewController)
+                                , pi
+                                )
+                            , par
+                            ).Compile();
+                    }
+                    return _Getter_HoveredItem(_Raw);
+                }
+            }
+        }
+        public class ITreeViewDataSourceWrapper : NonPublicTypeWrapper<object>
+        {
+            private static Type _Type_ITreeViewDataSource;
+            public static Type Type_ITreeViewDataSource
+            {
+                get
+                {
+                    if (_Type_ITreeViewDataSource == null)
+                    {
+                        _Type_ITreeViewDataSource = typeof(EditorGUI).Assembly.GetType("UnityEditor.IMGUI.Controls.ITreeViewDataSource");
+                    }
+                    return _Type_ITreeViewDataSource;
+                }
+            }
+
+            internal ITreeViewDataSourceWrapper(object raw)
+            {
+                _Raw = raw;
+            }
+
+            private static Func<object, IList<TreeViewItem>> _Func_GetRows;
+            public IList<TreeViewItem> GetRows()
+            {
+                if (_Func_GetRows == null)
+                {
+                    var mi = Type_ITreeViewDataSource.GetMethod("GetRows");
+                    var par = Expression.Parameter(typeof(object));
+                    _Func_GetRows = Expression.Lambda<Func<object, IList<TreeViewItem>>>(
+                        Expression.Call(
+                            Expression.Convert(par, Type_ITreeViewDataSource)
+                            , mi)
+                        , par
+                        ).Compile();
+                }
+                return _Func_GetRows(_Raw);
+            }
+
+            private static Func<object, int, TreeViewItem> _Func_FindItem;
+            public TreeViewItem FindItem(int id)
+            {
+                if (_Func_FindItem == null)
+                {
+                    var mi = Type_ITreeViewDataSource.GetMethod("FindItem");
+                    var tar = Expression.Parameter(typeof(object));
+                    var par = Expression.Parameter(typeof(int));
+                    _Func_FindItem = Expression.Lambda<Func<object, int, TreeViewItem>>(
+                        Expression.Call(
+                            Expression.Convert(tar, Type_ITreeViewDataSource)
+                            , mi, par)
+                        , tar, par
+                        ).Compile();
+                }
+                return _Func_FindItem(_Raw, id);
+            }
+        }
+
+        public delegate void HierarchyWindowItemOnGUIExCallback(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect rect);
+        public static event HierarchyWindowItemOnGUIExCallback OnHandleHierarchyWindowItemOnGUIEx;
+        public static void HandleHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+        {
+            if (OnHandleHierarchyWindowItemOnGUIEx != null)
+            {
+                SceneHierarchyWindowWrapper win = SceneHierarchyWindowWrapper.GetSceneHierarchyWindowAt(GUIUtility.GUIToScreenRect(selectionRect));
+                var item = win.SceneHierarchy.TreeView.Data.FindItem(instanceID);
+                OnHandleHierarchyWindowItemOnGUIEx(win, item, instanceID, selectionRect);
+            }
         }
 
         static DynamicPrefabInspector()
         {
             EditorApplication.hierarchyWindowItemOnGUI += HandleHierarchyWindowItemOnGUI;
+            OnHandleHierarchyWindowItemOnGUIEx += HandleHierarchyWindowItemOnGUIEx;
         }
-        private static void HandleHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+        private static void HandleHierarchyWindowItemOnGUIEx(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect selectionRect)
         {
-            //if (Event.current.type == EventType.Repaint)
+            if (Event.current.type == EventType.Repaint)
             {
                 var obj = EditorUtility.InstanceIDToObject(instanceID);
                 if (obj != null)
@@ -201,70 +532,94 @@ namespace Capstones.UnityEditorEx
                                 }
                             }
                         }
-                        if (!EditorGUIUtility.isProSkin)
-                        {
-                            fontColor = (fontColor + Color.black) / 2;
-                            if (go.activeInHierarchy)
-                            {
-                                fontColor = (fontColor + Color.black) / 2;
-                            }
-                        }
-                        else
-                        {
-                            if (!go.activeInHierarchy)
-                            {
-                                fontColor = (fontColor + Color.black) / 2;
-                            }
-                        }
+                        //if (!EditorGUIUtility.isProSkin)
+                        //{
+                        //    fontColor = (fontColor + Color.black) / 2;
+                        //    if (go.activeInHierarchy)
+                        //    {
+                        //        fontColor = (fontColor + Color.black) / 2;
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    if (!go.activeInHierarchy)
+                        //    {
+                        //        fontColor = (fontColor + Color.black) / 2;
+                        //    }
+                        //}
                         if (shouldredraw)
                         { 
                             var offset = EditorStyles.toggle.CalcSize(GUIContent.none).x;
                             var labelWidth = EditorStyles.label.CalcSize(new GUIContent(obj.name)).x;
                             labelWidth = Math.Min(labelWidth, selectionRect.size.x - offset);
-                            var vspace = EditorGUIUtility.standardVerticalSpacing;
+                            //var vspace = EditorGUIUtility.standardVerticalSpacing;
+                            var vspace = 0;
                             Rect offsetRect = new Rect(selectionRect.position + new Vector2(offset, vspace), new Vector2(labelWidth, selectionRect.size.y - vspace));
 
-                            ////Draw Background
+                            // Color of name Label
+                            Color defaultLabelColor = fontColor;
+                            GUIStyle labelstyle;
+                            if (go.activeInHierarchy)
+                            {
+                                labelstyle = GetTreeViewStyle_LineStyle();
+                            }
+                            else
+                            {
+                                labelstyle = GetGameObjectStyle_DisabledLabel();
+                            }
+
+                            //Draw Background
                             //var skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector);
-                            //var backColor = GetDefaultBackgroundColor();
-                            //if (Selection.Contains(instanceID))
-                            //{
-                            //    var focusWin = EditorWindow.focusedWindow;
-                            //    if (focusWin && focusWin.GetType().Name == "SceneHierarchyWindow")
-                            //    {
-                            //        var scolor = skin.settings.selectionColor;
-                            //        var alpha = scolor.a * 0.85f;
-                            //        backColor = backColor * (1.0f - alpha) + scolor * alpha;
-                            //        backColor.a = 1;
-                            //    }
-                            //    else
-                            //    {
-                            //        backColor *= 1.3f;
-                            //        backColor.a = 1.0f;
-                            //    }
-                            //}
-                            //else
-                            //{
-                            //    var checkRect = selectionRect;
-                            //    var mouseWin = EditorWindow.mouseOverWindow;
-                            //    if (mouseWin && mouseWin.GetType().Name == "SceneHierarchyWindow")
-                            //    {
-                            //        checkRect.xMin = 0;
-                            //        checkRect.width = mouseWin.position.width;
-                            //    }
-                            //    if (checkRect.Contains(Event.current.mousePosition))
-                            //    {
-                            //        backColor *= 0.85f;
-                            //        backColor.a = 1.0f;
-                            //    }
-                            //}
-                            //EditorGUI.DrawRect(offsetRect, backColor);
+                            var backColor = GetDefaultBackgroundColor();
+                            EditorGUI.DrawRect(offsetRect, backColor);
+                            if (win.SceneHierarchy.TreeView.IsItemDragSelectedOrSelected(item))
+                            {
+                                var focusWin = EditorWindow.focusedWindow;
+                                bool focused = focusWin == win.Raw;
+                                var style = GetHierarchyStyle_Selection();
+                                style.Draw(offsetRect, false, false, true, focused);
+                                if (focused)
+                                {
+                                    defaultLabelColor = labelstyle.onFocused.textColor;
+                                }
+                                else
+                                {
+                                    defaultLabelColor = labelstyle.onNormal.textColor;
+                                }
+                            }
+                            else
+                            {
+                                if (win.SceneHierarchy.TreeView.HoveredItem == item)
+                                {
+                                    EditorGUI.DrawRect(offsetRect, GetGameObjectStyle_HoveredBackgroundColor());
+                                }
+                                defaultLabelColor = labelstyle.normal.textColor;
+                            }
 
                             // Draw name label
+                            fontColor = (fontColor + defaultLabelColor) / 2;
+                            fontColor.a = defaultLabelColor.a;
+
                             EditorGUI.LabelField(offsetRect, obj.name, new GUIStyle()
                             {
                                 normal = new GUIStyleState() { textColor = fontColor },
                             });
+
+                            // overdraw name label
+                            //Rect[] overdrawRects = new[]
+                            //{
+                            //    new Rect(offsetRect.x - 1, offsetRect.y, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x, offsetRect.y - 1, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x + 1, offsetRect.y, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x, offsetRect.y + 1, offsetRect.width, offsetRect.height),
+                            //};
+                            //for (int i = 0; i < overdrawRects.Length; ++i)
+                            //{
+                            //    EditorGUI.LabelField(overdrawRects[i], obj.name, new GUIStyle()
+                            //    {
+                            //        normal = new GUIStyleState() { textColor = fontColor },
+                            //    });
+                            //}
                         }
                     }
                 }
