@@ -493,22 +493,32 @@ namespace Capstones.UnityEditorEx
                         {
                             shouldredraw = true;
                             fontColor = Color.green;
-                            Color prefabColor = Color.green;
+                            //Color prefabColor = Color.green;
+
+                            //var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
+                            //if (prefabStatus == PrefabInstanceStatus.Connected)
+                            //{
+                            //    prefabColor = Color.blue;
+                            //}
+                            //else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
+                            //{
+                            //    prefabColor = Color.red;
+                            //}
+                            //fontColor = (fontColor + prefabColor);// / 2;
+                            //fontColor.r = Mathf.Clamp01(fontColor.r);
+                            //fontColor.g = Mathf.Clamp01(fontColor.g);
+                            //fontColor.b = Mathf.Clamp01(fontColor.b);
+                            //fontColor.a = Mathf.Clamp01(fontColor.a);
 
                             var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
                             if (prefabStatus == PrefabInstanceStatus.Connected)
                             {
-                                prefabColor = Color.blue;
+                                fontColor = Color.cyan;
                             }
                             else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
                             {
-                                prefabColor = Color.red;
+                                fontColor = new Color(1f, 0.5f, 0f, 1f);
                             }
-                            fontColor = (fontColor + prefabColor);// / 2;
-                            fontColor.r = Mathf.Clamp01(fontColor.r);
-                            fontColor.g = Mathf.Clamp01(fontColor.g);
-                            fontColor.b = Mathf.Clamp01(fontColor.b);
-                            fontColor.a = Mathf.Clamp01(fontColor.a);
                         }
                         else
                         {
