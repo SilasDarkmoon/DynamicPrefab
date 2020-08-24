@@ -466,7 +466,15 @@ namespace Capstones.UnityEditorEx
             if (OnHandleHierarchyWindowItemOnGUIEx != null)
             {
                 SceneHierarchyWindowWrapper win = SceneHierarchyWindowWrapper.GetSceneHierarchyWindowAt(GUIUtility.GUIToScreenRect(selectionRect));
+                if (win == null)
+                {
+                    return; // try to draw an item out of hierarchy view - can not find the view by selectionRect.
+                }
                 var item = win.SceneHierarchy.TreeView.Data.FindItem(instanceID);
+                if (item == null)
+                {
+                    return; // the item is collapsed.
+                }
                 OnHandleHierarchyWindowItemOnGUIEx(win, item, instanceID, selectionRect);
             }
         }
