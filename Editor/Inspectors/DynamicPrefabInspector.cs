@@ -247,11 +247,17 @@ namespace Capstones.UnityEditorEx
                 }
             }
 
+            private static Func<IList> _Func_GetAllSceneHierarchyWindows;
             public static SceneHierarchyWindowWrapper[] GetAllSceneHierarchyWindows()
             {
-                var wins = Resources.FindObjectsOfTypeAll(Type_SceneHierarchyWindow);
-                SceneHierarchyWindowWrapper[] results = new SceneHierarchyWindowWrapper[wins.Length];
-                for (int i = 0; i < wins.Length; ++i)
+                if (_Func_GetAllSceneHierarchyWindows == null)
+                {
+                    var mi = Type_SceneHierarchyWindow.GetMethod("GetAllSceneHierarchyWindows", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    _Func_GetAllSceneHierarchyWindows = (Func<IList>)Delegate.CreateDelegate(typeof(Func<IList>), mi);
+                }
+                var wins = _Func_GetAllSceneHierarchyWindows();
+                SceneHierarchyWindowWrapper[] results = new SceneHierarchyWindowWrapper[wins.Count];
+                for (int i = 0; i < wins.Count; ++i)
                 {
                     results[i] = new SceneHierarchyWindowWrapper(wins[i] as EditorWindow);
                 }
@@ -457,6 +463,22 @@ namespace Capstones.UnityEditorEx
                 }
                 return _Func_FindItem(_Raw, id);
             }
+            public TreeViewItem FindItemInRows(int id)
+            {
+                var rows = GetRows();
+                if (rows != null)
+                {
+                    for (int i = 0; i < rows.Count; ++i)
+                    {
+                        var row = rows[i];
+                        if (row.id == id)
+                        {
+                            return row;
+                        }
+                    }
+                }
+                return null;
+            }
         }
 
         public delegate void HierarchyWindowItemOnGUIExCallback(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect rect);
@@ -470,7 +492,7 @@ namespace Capstones.UnityEditorEx
                 {
                     return; // try to draw an item out of hierarchy view - can not find the view by selectionRect.
                 }
-                var item = win.SceneHierarchy.TreeView.Data.FindItem(instanceID);
+                var item = win.SceneHierarchy.TreeView.Data.FindItemInRows(instanceID);
                 if (item == null)
                 {
                     return; // the item is collapsed.
