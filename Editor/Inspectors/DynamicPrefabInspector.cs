@@ -96,47 +96,6 @@ namespace Capstones.UnityEditorEx
             soTarget.ApplyModifiedProperties();
         }
 
-        private static class NativeImported
-        {
-            [DllImport("gdi32")]
-            public static extern uint GetPixel(IntPtr hDC, int XPos, int YPos);
-            [DllImport("User32.dll", CharSet = CharSet.Auto)]
-            public static extern IntPtr GetWindowDC(IntPtr hWnd);
-
-            [StructLayout(LayoutKind.Sequential)]
-            public struct POINT
-            {
-                public int X;
-                public int Y;
-                public POINT(int x, int y)
-                {
-                    X = x;
-                    Y = y;
-                }
-            }
-
-            [DllImport("user32.dll", CharSet = CharSet.Auto)]
-            public static extern bool GetCursorPos(out POINT pt);
-        }
-
-        public static Color GetColorAtScreenPos(Vector2 pos)
-        {
-            IntPtr dc = NativeImported.GetWindowDC(IntPtr.Zero);
-            uint colorn = NativeImported.GetPixel(dc, (int)pos.x, (int)pos.y);
-
-            byte a = 255; //(byte)((colorn & (0xFF << 24)) >> 24);
-            byte b = (byte)((colorn & (0xFF << 16)) >> 16);
-            byte g = (byte)((colorn & (0xFF << 8)) >> 8);
-            byte r = (byte)(colorn & 0xFF);
-
-            return new Color32(r, g, b, a);
-        }
-        public static Color GetColorAtGUIPos(Vector2 pos)
-        {
-            pos = EditorGUIUtility.GUIToScreenPoint(pos);
-            //pos.x = Screen.height - pos.x;
-            return GetColorAtScreenPos(pos);
-        }
         //private static Color GetDefaultBackgroundColor()
         //{
         //    float kViewBackgroundIntensity = EditorGUIUtility.isProSkin ? 0.22f : 0.76f;
