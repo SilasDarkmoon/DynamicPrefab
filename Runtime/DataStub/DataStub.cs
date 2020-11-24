@@ -21,6 +21,10 @@ namespace Capstones.UnityEngineEx
         {
             return Val;
         }
+        public D GetVal<D>()
+        {
+            return Val.As<D>();
+        }
         internal override void SetVal(object val)
         {
             //if (val == null)
