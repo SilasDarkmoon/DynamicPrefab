@@ -21,7 +21,7 @@ namespace Capstones.UnityEngineEx
         public bool FillCenter = true;
         public bool IsNativeSize = false;
 
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
         private Image _TargetImage;
         private RawImage _TargetRawImage;
 #endif
@@ -126,7 +126,7 @@ namespace Capstones.UnityEngineEx
 
         public bool IsImageDirty()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             var image = _TargetImage;
             if (!Application.isPlaying)
             {
@@ -161,7 +161,7 @@ namespace Capstones.UnityEngineEx
 
         void Update()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             if (IsImageDirty())
             {
                 if (Application.isEditor && !Application.isPlaying || !OnlyLoadWhenEmpty || IsImageEmpty())
@@ -194,7 +194,7 @@ namespace Capstones.UnityEngineEx
 
         public void SavePrefabWithoutChild()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             DestroyDynamicChild();
             var prefab = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
             if (prefab)
@@ -210,7 +210,7 @@ namespace Capstones.UnityEngineEx
         }
         public void RebuildImage()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             var image = GetComponent<Image>();
             if (image)
             {
@@ -222,7 +222,7 @@ namespace Capstones.UnityEngineEx
 
         void OnDisable()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             if (!Application.isPlaying)
             {
                 DestroyDynamicChild();
@@ -231,7 +231,7 @@ namespace Capstones.UnityEngineEx
         }
         void OnEnable()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             if (!Application.isPlaying)
             {
                 if (IsImageDirty() || !OnlyLoadWhenEmpty || IsImageEmpty())
@@ -297,7 +297,7 @@ namespace Capstones.UnityEngineEx
                     }
                 }
             }
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             _TargetRawImage = null;
             _TargetImage = null;
             if (Application.isPlaying)
@@ -310,7 +310,7 @@ namespace Capstones.UnityEngineEx
 
         void Start()
         {
-#if UNITY_EDITOR && !USE_CLIENT_RES_MANAGER
+#if UNITY_EDITOR
             var rawimage = GetComponent<RawImage>();
             if (rawimage)
             {
