@@ -9,6 +9,8 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using Capstones.UnityEngineEx;
 
+using static Capstones.UnityEditorEx.EditorWindowExtensions;
+
 using Object = UnityEngine.Object;
 
 namespace Capstones.UnityEditorEx
@@ -96,13 +98,222 @@ namespace Capstones.UnityEditorEx
             soTarget.ApplyModifiedProperties();
         }
 
+        public delegate void HierarchyWindowItemOnGUIExCallback(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect rect);
+        public static event HierarchyWindowItemOnGUIExCallback OnHandleHierarchyWindowItemOnGUIEx;
+        public static void HandleHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+        {
+            if (OnHandleHierarchyWindowItemOnGUIEx != null)
+            {
+                SceneHierarchyWindowWrapper win = SceneHierarchyWindowWrapper.GetSceneHierarchyWindowAt(GUIUtility.GUIToScreenRect(selectionRect));
+                if (win == null)
+                {
+                    return; // try to draw an item out of hierarchy view - can not find the view by selectionRect.
+                }
+                var item = win.SceneHierarchy.TreeView.Data.FindItemInRows(instanceID);
+                if (item == null)
+                {
+                    return; // the item is collapsed.
+                }
+                OnHandleHierarchyWindowItemOnGUIEx(win, item, instanceID, selectionRect);
+            }
+        }
+
+        static DynamicPrefabInspector()
+        {
+            EditorApplication.hierarchyWindowItemOnGUI += HandleHierarchyWindowItemOnGUI;
+            OnHandleHierarchyWindowItemOnGUIEx += HandleHierarchyWindowItemOnGUIEx;
+        }
+        private static void HandleHierarchyWindowItemOnGUIEx(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect selectionRect)
+        {
+            if (Event.current.type == EventType.Repaint)
+            {
+                var obj = EditorUtility.InstanceIDToObject(instanceID);
+                if (obj != null)
+                {
+                    if (obj is GameObject)
+                    {
+                        var go = obj as GameObject;
+                        bool shouldredraw = false;
+                        Color fontColor = Color.green;
+                        var dprefab = go.GetComponent<DynamicPrefab>();
+                        if (dprefab != null)
+                        {
+                            shouldredraw = true;
+                            fontColor = Color.green;
+                            //Color prefabColor = Color.green;
+
+                            //var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
+                            //if (prefabStatus == PrefabInstanceStatus.Connected)
+                            //{
+                            //    prefabColor = Color.blue;
+                            //}
+                            //else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
+                            //{
+                            //    prefabColor = Color.red;
+                            //}
+                            //fontColor = (fontColor + prefabColor);// / 2;
+                            //fontColor.r = Mathf.Clamp01(fontColor.r);
+                            //fontColor.g = Mathf.Clamp01(fontColor.g);
+                            //fontColor.b = Mathf.Clamp01(fontColor.b);
+                            //fontColor.a = Mathf.Clamp01(fontColor.a);
+
+                            var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
+                            if (prefabStatus == PrefabInstanceStatus.Connected)
+                            {
+                                fontColor = Color.cyan;
+                            }
+                            else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
+                            {
+                                fontColor = new Color(1f, 0.5f, 0f, 1f);
+                            }
+                        }
+                        else
+                        {
+                            var stub = go.GetComponent<DataStubBase>();
+                            if (stub)
+                            {
+                                if (!IsDynamicChild(go.transform))
+                                {
+                                    shouldredraw = true;
+                                    fontColor = Color.yellow;
+
+                                    //var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
+                                    //if (prefabStatus == PrefabInstanceStatus.Connected)
+                                    //{
+                                    //    fontColor.a = 0.5f;
+                                    //}
+                                    //else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
+                                    //{
+                                    //    fontColor.a = 0.5f;
+                                    //}
+                                }
+                            }
+                        }
+                        //if (!EditorGUIUtility.isProSkin)
+                        //{
+                        //    fontColor = (fontColor + Color.black) / 2;
+                        //    if (go.activeInHierarchy)
+                        //    {
+                        //        fontColor = (fontColor + Color.black) / 2;
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    if (!go.activeInHierarchy)
+                        //    {
+                        //        fontColor = (fontColor + Color.black) / 2;
+                        //    }
+                        //}
+                        if (shouldredraw)
+                        { 
+                            var offset = EditorStyles.toggle.CalcSize(GUIContent.none).x;
+                            var labelWidth = EditorStyles.label.CalcSize(new GUIContent(obj.name)).x;
+                            labelWidth = Math.Min(labelWidth, selectionRect.size.x - offset);
+                            //var vspace = EditorGUIUtility.standardVerticalSpacing;
+                            var vspace = 0;
+                            Rect offsetRect = new Rect(selectionRect.position + new Vector2(offset, vspace), new Vector2(labelWidth, selectionRect.size.y - vspace));
+
+                            // Color of name Label
+                            Color defaultLabelColor = fontColor;
+                            GUIStyle labelstyle;
+                            if (go.activeInHierarchy)
+                            {
+                                labelstyle = GetTreeViewStyle_LineStyle();
+                            }
+                            else
+                            {
+                                labelstyle = GetGameObjectStyle_DisabledLabel();
+                            }
+
+                            //Draw Background
+                            //var skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector);
+                            var backColor = GetDefaultBackgroundColor();
+                            EditorGUI.DrawRect(offsetRect, backColor);
+                            if (win.SceneHierarchy.TreeView.IsItemDragSelectedOrSelected(item))
+                            {
+                                var focusWin = EditorWindow.focusedWindow;
+                                bool focused = focusWin == win.Raw;
+                                var style = GetHierarchyStyle_Selection();
+                                style.Draw(offsetRect, false, false, true, focused);
+                                if (focused)
+                                {
+                                    defaultLabelColor = labelstyle.onFocused.textColor;
+                                }
+                                else
+                                {
+                                    defaultLabelColor = labelstyle.onNormal.textColor;
+                                }
+                            }
+                            else
+                            {
+                                if (win.SceneHierarchy.TreeView.HoveredItem == item)
+                                {
+                                    EditorGUI.DrawRect(offsetRect, GetGameObjectStyle_HoveredBackgroundColor());
+                                }
+                                defaultLabelColor = labelstyle.normal.textColor;
+                            }
+
+                            // Draw name label
+                            fontColor = (fontColor + defaultLabelColor) / 2;
+                            fontColor.a = defaultLabelColor.a;
+
+                            EditorGUI.LabelField(offsetRect, obj.name, new GUIStyle()
+                            {
+                                normal = new GUIStyleState() { textColor = fontColor },
+                            });
+
+                            // overdraw name label
+                            //Rect[] overdrawRects = new[]
+                            //{
+                            //    new Rect(offsetRect.x - 1, offsetRect.y, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x, offsetRect.y - 1, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x + 1, offsetRect.y, offsetRect.width, offsetRect.height),
+                            //    //new Rect(offsetRect.x, offsetRect.y + 1, offsetRect.width, offsetRect.height),
+                            //};
+                            //for (int i = 0; i < overdrawRects.Length; ++i)
+                            //{
+                            //    EditorGUI.LabelField(overdrawRects[i], obj.name, new GUIStyle()
+                            //    {
+                            //        normal = new GUIStyleState() { textColor = fontColor },
+                            //    });
+                            //}
+                        }
+                    }
+                }
+            }
+        }
+
+        public static bool IsDynamicChild(Transform trans)
+        {
+            while (trans)
+            {
+                var parent = trans.parent;
+                if (parent)
+                {
+                    var par = parent.GetComponent<DynamicPrefab>();
+                    if (par)
+                    {
+                        if (par.DynamicChild == trans.gameObject)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                trans = parent;
+            }
+            return false;
+        }
+    }
+
+    public static class EditorWindowExtensions
+    {
         //private static Color GetDefaultBackgroundColor()
         //{
         //    float kViewBackgroundIntensity = EditorGUIUtility.isProSkin ? 0.22f : 0.76f;
         //    return new Color(kViewBackgroundIntensity, kViewBackgroundIntensity, kViewBackgroundIntensity, 1f);
         //}
         private static Func<Color> _GetDefaultBackgroundColorFunc;
-        private static Color GetDefaultBackgroundColor()
+        public static Color GetDefaultBackgroundColor()
         {
             if (_GetDefaultBackgroundColorFunc == null)
             {
@@ -121,7 +332,7 @@ namespace Capstones.UnityEditorEx
             return _Type_HierarchyStyles;
         }
         private static Func<GUIStyle> _GetHierarchyStyle_Selection_Func;
-        private static GUIStyle GetHierarchyStyle_Selection()
+        public static GUIStyle GetHierarchyStyle_Selection()
         {
             if (_GetHierarchyStyle_Selection_Func == null)
             {
@@ -141,7 +352,7 @@ namespace Capstones.UnityEditorEx
             return _Type_GameObjectStyles;
         }
         private static Func<Color> _GetGameObjectStyle_HoveredBackgroundColor_Func;
-        private static Color GetGameObjectStyle_HoveredBackgroundColor()
+        public static Color GetGameObjectStyle_HoveredBackgroundColor()
         {
             if (_GetGameObjectStyle_HoveredBackgroundColor_Func == null)
             {
@@ -151,7 +362,7 @@ namespace Capstones.UnityEditorEx
             return _GetGameObjectStyle_HoveredBackgroundColor_Func();
         }
         private static Func<GUIStyle> _GetGameObjectStyle_DisabledLabel_Func;
-        private static GUIStyle GetGameObjectStyle_DisabledLabel()
+        public static GUIStyle GetGameObjectStyle_DisabledLabel()
         {
             if (_GetGameObjectStyle_DisabledLabel_Func == null)
             {
@@ -171,7 +382,7 @@ namespace Capstones.UnityEditorEx
             return _Type_TreeViewStyles;
         }
         private static Func<GUIStyle> _GetTreeViewStyle_LineStyle_Func;
-        private static GUIStyle GetTreeViewStyle_LineStyle()
+        public static GUIStyle GetTreeViewStyle_LineStyle()
         {
             if (_GetTreeViewStyle_LineStyle_Func == null)
             {
@@ -186,6 +397,7 @@ namespace Capstones.UnityEditorEx
             protected TRaw _Raw;
             public TRaw Raw { get { return _Raw; } }
         }
+
         public class SceneHierarchyWindowWrapper : NonPublicTypeWrapper<EditorWindow>
         {
             private SceneHierarchyWindowWrapper(EditorWindow win)
@@ -228,7 +440,7 @@ namespace Capstones.UnityEditorEx
                 for (int i = 0; i < all.Length; ++i)
                 {
                     var win = all[i];
-                    if (win._Raw.position.Overlaps(rect))
+                    if (win._Raw.GetRealPosition().Overlaps(rect))
                     {
                         return win;
                     }
@@ -439,211 +651,75 @@ namespace Capstones.UnityEditorEx
                 return null;
             }
         }
-
-        public delegate void HierarchyWindowItemOnGUIExCallback(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect rect);
-        public static event HierarchyWindowItemOnGUIExCallback OnHandleHierarchyWindowItemOnGUIEx;
-        public static void HandleHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+        public class HostViewWrapper : NonPublicTypeWrapper<ScriptableObject>
         {
-            if (OnHandleHierarchyWindowItemOnGUIEx != null)
+            private static Type _Type_HostView;
+            public static Type Type_HostView
             {
-                SceneHierarchyWindowWrapper win = SceneHierarchyWindowWrapper.GetSceneHierarchyWindowAt(GUIUtility.GUIToScreenRect(selectionRect));
-                if (win == null)
+                get
                 {
-                    return; // try to draw an item out of hierarchy view - can not find the view by selectionRect.
+                    if (_Type_HostView == null)
+                    {
+                        _Type_HostView = typeof(EditorGUI).Assembly.GetType("UnityEditor.HostView");
+                    }
+                    return _Type_HostView;
                 }
-                var item = win.SceneHierarchy.TreeView.Data.FindItemInRows(instanceID);
-                if (item == null)
+            }
+
+            internal HostViewWrapper(ScriptableObject raw)
+            {
+                _Raw = raw;
+            }
+
+            private static Func<ScriptableObject, RectOffset> _Func_GetBorder;
+            public RectOffset GetBorder()
+            {
+                if (_Func_GetBorder == null)
                 {
-                    return; // the item is collapsed.
+                    var pi = Type_HostView.GetProperty("borderSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var tar = Expression.Parameter(typeof(ScriptableObject));
+                    _Func_GetBorder = Expression.Lambda<Func<ScriptableObject, RectOffset>>(
+                        Expression.Property(
+                            Expression.Convert(tar, Type_HostView)
+                            , pi)
+                        , tar
+                        ).Compile();
                 }
-                OnHandleHierarchyWindowItemOnGUIEx(win, item, instanceID, selectionRect);
+                return _Func_GetBorder(_Raw);
             }
         }
-
-        static DynamicPrefabInspector()
+        private static Func<EditorWindow, ScriptableObject> _Func_EditorWindow_GetParent;
+        public static HostViewWrapper GetParent(this EditorWindow win)
         {
-            EditorApplication.hierarchyWindowItemOnGUI += HandleHierarchyWindowItemOnGUI;
-            OnHandleHierarchyWindowItemOnGUIEx += HandleHierarchyWindowItemOnGUIEx;
-        }
-        private static void HandleHierarchyWindowItemOnGUIEx(SceneHierarchyWindowWrapper win, TreeViewItem item, int instanceID, Rect selectionRect)
-        {
-            if (Event.current.type == EventType.Repaint)
+            if (_Func_EditorWindow_GetParent == null)
             {
-                var obj = EditorUtility.InstanceIDToObject(instanceID);
+                var fi = typeof(EditorWindow).GetField("m_Parent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var expar = Expression.Parameter(typeof(EditorWindow));
+                _Func_EditorWindow_GetParent = Expression.Lambda<Func<EditorWindow, ScriptableObject>>(Expression.Field(expar, fi), expar).Compile();
+            }
+            if (win != null)
+            {
+                var obj = _Func_EditorWindow_GetParent(win);
                 if (obj != null)
                 {
-                    if (obj is GameObject)
-                    {
-                        var go = obj as GameObject;
-                        bool shouldredraw = false;
-                        Color fontColor = Color.green;
-                        var dprefab = go.GetComponent<DynamicPrefab>();
-                        if (dprefab != null)
-                        {
-                            shouldredraw = true;
-                            fontColor = Color.green;
-                            //Color prefabColor = Color.green;
-
-                            //var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
-                            //if (prefabStatus == PrefabInstanceStatus.Connected)
-                            //{
-                            //    prefabColor = Color.blue;
-                            //}
-                            //else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
-                            //{
-                            //    prefabColor = Color.red;
-                            //}
-                            //fontColor = (fontColor + prefabColor);// / 2;
-                            //fontColor.r = Mathf.Clamp01(fontColor.r);
-                            //fontColor.g = Mathf.Clamp01(fontColor.g);
-                            //fontColor.b = Mathf.Clamp01(fontColor.b);
-                            //fontColor.a = Mathf.Clamp01(fontColor.a);
-
-                            var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
-                            if (prefabStatus == PrefabInstanceStatus.Connected)
-                            {
-                                fontColor = Color.cyan;
-                            }
-                            else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
-                            {
-                                fontColor = new Color(1f, 0.5f, 0f, 1f);
-                            }
-                        }
-                        else
-                        {
-                            var stub = go.GetComponent<DataStubBase>();
-                            if (stub)
-                            {
-                                if (!IsDynamicChild(go.transform))
-                                {
-                                    shouldredraw = true;
-                                    fontColor = Color.yellow;
-
-                                    //var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(obj);
-                                    //if (prefabStatus == PrefabInstanceStatus.Connected)
-                                    //{
-                                    //    fontColor.a = 0.5f;
-                                    //}
-                                    //else if (prefabStatus == PrefabInstanceStatus.MissingAsset)
-                                    //{
-                                    //    fontColor.a = 0.5f;
-                                    //}
-                                }
-                            }
-                        }
-                        //if (!EditorGUIUtility.isProSkin)
-                        //{
-                        //    fontColor = (fontColor + Color.black) / 2;
-                        //    if (go.activeInHierarchy)
-                        //    {
-                        //        fontColor = (fontColor + Color.black) / 2;
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    if (!go.activeInHierarchy)
-                        //    {
-                        //        fontColor = (fontColor + Color.black) / 2;
-                        //    }
-                        //}
-                        if (shouldredraw)
-                        { 
-                            var offset = EditorStyles.toggle.CalcSize(GUIContent.none).x;
-                            var labelWidth = EditorStyles.label.CalcSize(new GUIContent(obj.name)).x;
-                            labelWidth = Math.Min(labelWidth, selectionRect.size.x - offset);
-                            //var vspace = EditorGUIUtility.standardVerticalSpacing;
-                            var vspace = 0;
-                            Rect offsetRect = new Rect(selectionRect.position + new Vector2(offset, vspace), new Vector2(labelWidth, selectionRect.size.y - vspace));
-
-                            // Color of name Label
-                            Color defaultLabelColor = fontColor;
-                            GUIStyle labelstyle;
-                            if (go.activeInHierarchy)
-                            {
-                                labelstyle = GetTreeViewStyle_LineStyle();
-                            }
-                            else
-                            {
-                                labelstyle = GetGameObjectStyle_DisabledLabel();
-                            }
-
-                            //Draw Background
-                            //var skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector);
-                            var backColor = GetDefaultBackgroundColor();
-                            EditorGUI.DrawRect(offsetRect, backColor);
-                            if (win.SceneHierarchy.TreeView.IsItemDragSelectedOrSelected(item))
-                            {
-                                var focusWin = EditorWindow.focusedWindow;
-                                bool focused = focusWin == win.Raw;
-                                var style = GetHierarchyStyle_Selection();
-                                style.Draw(offsetRect, false, false, true, focused);
-                                if (focused)
-                                {
-                                    defaultLabelColor = labelstyle.onFocused.textColor;
-                                }
-                                else
-                                {
-                                    defaultLabelColor = labelstyle.onNormal.textColor;
-                                }
-                            }
-                            else
-                            {
-                                if (win.SceneHierarchy.TreeView.HoveredItem == item)
-                                {
-                                    EditorGUI.DrawRect(offsetRect, GetGameObjectStyle_HoveredBackgroundColor());
-                                }
-                                defaultLabelColor = labelstyle.normal.textColor;
-                            }
-
-                            // Draw name label
-                            fontColor = (fontColor + defaultLabelColor) / 2;
-                            fontColor.a = defaultLabelColor.a;
-
-                            EditorGUI.LabelField(offsetRect, obj.name, new GUIStyle()
-                            {
-                                normal = new GUIStyleState() { textColor = fontColor },
-                            });
-
-                            // overdraw name label
-                            //Rect[] overdrawRects = new[]
-                            //{
-                            //    new Rect(offsetRect.x - 1, offsetRect.y, offsetRect.width, offsetRect.height),
-                            //    //new Rect(offsetRect.x, offsetRect.y - 1, offsetRect.width, offsetRect.height),
-                            //    //new Rect(offsetRect.x + 1, offsetRect.y, offsetRect.width, offsetRect.height),
-                            //    //new Rect(offsetRect.x, offsetRect.y + 1, offsetRect.width, offsetRect.height),
-                            //};
-                            //for (int i = 0; i < overdrawRects.Length; ++i)
-                            //{
-                            //    EditorGUI.LabelField(overdrawRects[i], obj.name, new GUIStyle()
-                            //    {
-                            //        normal = new GUIStyleState() { textColor = fontColor },
-                            //    });
-                            //}
-                        }
-                    }
+                    return new HostViewWrapper(obj);
                 }
             }
+            return null;
         }
-
-        public static bool IsDynamicChild(Transform trans)
+        public static Rect GetRealPosition(this EditorWindow win)
         {
-            while (trans)
+            var pos = win.position;
+            var parent = win.GetParent();
+            if (parent != null)
             {
-                var parent = trans.parent;
-                if (parent)
+                var border = parent.GetBorder();
+                if (border != null)
                 {
-                    var par = parent.GetComponent<DynamicPrefab>();
-                    if (par)
-                    {
-                        if (par.DynamicChild == trans.gameObject)
-                        {
-                            return true;
-                        }
-                    }
+                    pos.yMax += border.top + border.bottom;
                 }
-                trans = parent;
             }
-            return false;
+            return pos;
         }
     }
 
