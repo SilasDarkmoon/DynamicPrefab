@@ -178,6 +178,25 @@ public class DynamicImageInspector : InspectorBase<DynamicImage>
 
         EditorGUILayout.PropertyField(spOnlyEmpty);
         EditorGUILayout.PropertyField(spIsNativeSize);
+
+        //自动查找原Image资源的路径
+        if (GUILayout.Button("补全Path"))
+        {
+            var img = Target.GetComponent<Image>();
+            if (img != null)
+            {
+                var path = AssetDatabase.GetAssetPath(img.sprite);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    CapsResInfoEditor.GetAssetNormPath(path);
+                    Target.Path = path;
+
+                    EditorUtility.SetDirty(Target);
+                    Debug.LogFormat("set path: {0}", path);
+                }
+            }
+        }
+
         soTarget.ApplyModifiedProperties();
     }
 }
