@@ -188,7 +188,7 @@ public class DynamicImageInspector : InspectorBase<DynamicImage>
                 var path = AssetDatabase.GetAssetPath(img.sprite);
                 if (!string.IsNullOrEmpty(path))
                 {
-                    CapsResInfoEditor.GetAssetNormPath(path);
+                    path = CapsResInfoEditor.GetAssetNormPath(path);
                     Target.Path = path;
 
                     EditorUtility.SetDirty(Target);
