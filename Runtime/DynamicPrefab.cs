@@ -69,18 +69,25 @@ namespace Capstones.UnityEngineEx
                 if (prefab)
                 {
 #if UNITY_EDITOR
-                    DynamicChild = UnityEditor.PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-
-                    if (UnityEditor.PrefabUtility.GetPrefabInstanceStatus(this) != UnityEditor.PrefabInstanceStatus.NotAPrefab)
+                    if (ResManager.ResLoader is ResManager.ClientResLoader)
                     {
-                        List<UnityEditor.PropertyModification> mods = new List<UnityEditor.PropertyModification>(UnityEditor.PrefabUtility.GetPropertyModifications(this));
-                        mods.Add(new UnityEditor.PropertyModification()
+                        DynamicChild = Instantiate(prefab);
+                    }
+                    else
+                    {
+                        DynamicChild = UnityEditor.PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+                        if (UnityEditor.PrefabUtility.GetPrefabInstanceStatus(this) != UnityEditor.PrefabInstanceStatus.NotAPrefab)
                         {
-                            target = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(this),
-                            propertyPath = "DynamicChild",
-                            objectReference = DynamicChild,
-                        });
-                        UnityEditor.PrefabUtility.SetPropertyModifications(this, mods.ToArray());
+                            List<UnityEditor.PropertyModification> mods = new List<UnityEditor.PropertyModification>(UnityEditor.PrefabUtility.GetPropertyModifications(this));
+                            mods.Add(new UnityEditor.PropertyModification()
+                            {
+                                target = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(this),
+                                propertyPath = "DynamicChild",
+                                objectReference = DynamicChild,
+                            });
+                            UnityEditor.PrefabUtility.SetPropertyModifications(this, mods.ToArray());
+                        }
                     }
 #else
                     DynamicChild = Instantiate(prefab);
