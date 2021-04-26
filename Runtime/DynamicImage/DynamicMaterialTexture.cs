@@ -2,7 +2,6 @@
 
 namespace Capstones.UnityEngineEx
 {
-    [ExecuteInEditMode]
     public class DynamicMaterialTexture : MonoBehaviour
     {
         public string[] MatProps;
