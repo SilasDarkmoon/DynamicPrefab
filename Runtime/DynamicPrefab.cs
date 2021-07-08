@@ -28,6 +28,7 @@ namespace Capstones.UnityEngineEx
         {
 #if UNITY_EDITOR
             OldSource = Source;
+            DestroyDynamicChild();
 #endif
             LoadDynamicChild();
         }
