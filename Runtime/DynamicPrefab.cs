@@ -70,7 +70,7 @@ namespace Capstones.UnityEngineEx
                 if (prefab)
                 {
 #if UNITY_EDITOR
-                    if (ResManager.ResLoader is ResManager.ClientResLoader)
+                    if (ResManager.IsClientResLoader)
                     {
                         DynamicChild = Instantiate(prefab);
                     }
